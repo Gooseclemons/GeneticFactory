@@ -7,6 +7,7 @@ public class Factory {
     final int num_threads;
     final int num_floors;
     final CountDownLatch done;
+    StationSet stationSet;
 
     Factory(int num_threads, int num_floors) {
         this.num_threads = num_threads;
@@ -16,12 +17,12 @@ public class Factory {
 
         threads = new Worker[num_threads];
         for (int i = 0; i < num_threads; i++) {
-            threads[i] = new Worker(this, i);
+            threads[i] = new Worker();
         }
 
         floors = new Floor[num_floors];
         for(int i = 0; i < num_floors; i++) {
-            floors[i] = new Floor();
+            floors[i] = new Floor((int) (Math.sqrt(stationSet.totalSpots) + 1)); // PREDEFINE SQRT OF TOTALSPOTS
         }
 
     }

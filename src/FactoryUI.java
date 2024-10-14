@@ -1,45 +1,63 @@
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
-public class FactoryUI {
+public class FactoryUI extends JFrame {
 
-    static JFrame frame;
-    static JPanel floorPanel;
-    static JPanel statPanel;
-    static JPanel listPanel;
+    // Define Components as Globals
 
-    public static void main(String[] args) {
+    // Window and Component fields
+    Color backgroundColor;
+    final int SCREEN_WIDTH, SCREEN_HEIGHT;
+
+
+    FactoryUI(Color backgroundColor) {
+        this.backgroundColor = backgroundColor;
+
+        // Sets screen to max on start and saves width and height for later
+        setExtendedState(MAXIMIZED_BOTH);
+        Rectangle r = GraphicsEnvironment.getLocalGraphicsEnvironment().getMaximumWindowBounds();
+        SCREEN_WIDTH = (int) r.getWidth();
+        SCREEN_HEIGHT = (int) r.getHeight();
+        System.out.println(r);
+
         initializeComponents();
     }
 
-    static void initializeComponents() {
-        // frame setup
-        frame = new JFrame();
-        frame.setTitle("Factory");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(1, 3));
-        frame.setSize(500, 500);
-        frame.setVisible(true);
+    void initializeComponents() {
 
-        //panel setup
-        floorPanel = new JPanel();
-        floorPanel.setSize(100,100);
-        floorPanel.setBackground(Color.WHITE);
-        floorPanel.setBorder(new LineBorder(Color.BLACK, 5, true));
-        frame.add(floorPanel);
+        // Window initialization/settings
+        Container c = getContentPane();
+        setTitle("GeneticFactory");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        c.setBackground(backgroundColor);
+        setVisible(true);
 
-        statPanel = new JPanel();
-        statPanel.setSize(100,100);
-        statPanel.setBackground(Color.WHITE);
-        frame.add(statPanel);
+        /*
+         * Initializes the factoryGrid panel. Takes up EAST 2/3rds of screen
+         */
+        JPanel factoryGrid = new JPanel();
+        factoryGrid.setBackground(backgroundColor);
+        factoryGrid.setPreferredSize(new Dimension((int) ((SCREEN_WIDTH * 0.75) - 7),SCREEN_HEIGHT));
+        factoryGrid.setBorder(new CompoundBorder(
+                new EmptyBorder(5,5,5,5),
+                new LineBorder(Color.BLACK, 2, true)));
+        add(factoryGrid, BorderLayout.EAST);
 
-        listPanel = new JPanel();
-        listPanel.setSize(100,100);
-        listPanel.setBackground(Color.WHITE);
-        frame.add(listPanel);
+        /*
+         * Initializes the container for stat and floor panels. Takes up WEST 1/3rd of screen. Uses GridLayout
+         */
+        JPanel containerPanel = new JPanel();
+        containerPanel.setBackground(backgroundColor);
+        containerPanel.setPreferredSize(new Dimension((int) (SCREEN_WIDTH * 0.25) - 7, SCREEN_HEIGHT));
+        containerPanel.setLayout(new GridLayout(2,1));
+        containerPanel.setBorder(new CompoundBorder(
+                new EmptyBorder(5,5,5,5),
+                new LineBorder(Color.BLACK, 2, true)));
+        add(containerPanel, BorderLayout.WEST);
 
     }
 
