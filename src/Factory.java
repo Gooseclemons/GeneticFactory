@@ -1,4 +1,6 @@
+import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Factory {
@@ -15,7 +17,9 @@ public class Factory {
     int generationCount = 0;
     double fitnessCount = 0;
 
-    final CountDownLatch done;
+    // Barriers for running
+    final CountDownLatch done; // Used for end of thread lifecycle
+    CyclicBarrier barrier; // Barrier used for syncing between generations
 
     StationSet stationSet;
 
@@ -23,8 +27,10 @@ public class Factory {
         // The number of floors (Subpops) is the same as the number of threads
         this.num_threads = num_threads;
         this.num_floors = num_threads;
-        // Countdown latch to act as a barrier for threads
+        // Initialize barriers
         done = new CountDownLatch(num_threads);
+        barrier = new CyclicBarrier(num_threads, this::resetBarrier); // Supply action to cyclic barrier to reset itself upon continuation?
+
         this.stationSet = new StationSet(num_stations, nTypes);
         // Formula for calculating required dimensions of floors for all stations to fit
         dimension = (int) Math.sqrt(stationSet.totalSpots) + 1;
@@ -80,6 +86,23 @@ public class Factory {
         }
     }
 
+    /**
+     * Synchronized method so only one thread can edit bestFloors array at one time
+     * Assumes the bestFloors array is full since initializeBestFloors() populates the bestFloors array on Factory init
+     * @param challengerFloor
+     */
+    synchronized void compareFloor(Floor challengerFloor) {
+        int length = bestFloors.length;
+        // Loop from best to worst of bestFloors array
+        for (int i = length - 1; i >= 0; i--) {
+            if (challengerFloor.fitness > bestFloors[i].fitness) {
+                Floor tempFloor = bestFloors[i];
+                bestFloors[i] = challengerFloor;
+                challengerFloor = tempFloor;
+            }
+        }
+    }
+
     void start() {
         for (int i = 0; i < num_threads; i++) {
             threads[i].start();
@@ -98,6 +121,14 @@ public class Factory {
 
     void awaitDone() throws InterruptedException {
         done.await();
+    }
+
+    void cyclicBarrierWait() throws BrokenBarrierException, InterruptedException {
+        barrier.await();
+    }
+
+    void resetBarrier() {
+        barrier = new CyclicBarrier(num_threads, this::resetBarrier);
     }
 
     int getGenerationCount() {

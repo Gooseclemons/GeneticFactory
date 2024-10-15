@@ -1,3 +1,5 @@
+import java.util.concurrent.BrokenBarrierException;
+
 public class Worker extends Thread {
 
     Factory pop;
@@ -28,6 +30,7 @@ public class Worker extends Thread {
             // if you contain a best solution, switch current subpop into the Factory class best subpops
 
         }
+
     }
 
 }
