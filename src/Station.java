@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
@@ -5,14 +6,15 @@ import java.util.HashSet;
  */
 public class Station {
 
-    HashSet<Coordinate> coordinates;
+    ArrayList<Coordinate> coordinates;
     int type;
 
     Station(int type) {
         this.type = type;
+        coordinates = new ArrayList<>();
     }
 
-    void add(Coordinate c) {
+    void addCoordinate(Coordinate c) {
         coordinates.add(c);
     }
 
