@@ -1,3 +1,7 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -9,6 +13,10 @@ public class Factory {
     final Floor[] floors;
     double[][] affinityMatrix;
     Floor[] bestFloors;
+
+    // UI components
+    FactoryUI ui;
+    Timer timer;
 
     final int num_threads;
     final int num_floors;
@@ -31,9 +39,14 @@ public class Factory {
         done = new CountDownLatch(num_threads);
         barrier = new CyclicBarrier(num_threads, this::resetBarrier); // Supply action to cyclic barrier to reset itself upon continuation?
 
+        // Initialize UI
+        ui = new FactoryUI(this, Color.LIGHT_GRAY);
+        timer = new Timer(500, updateDisplay());    // Update every 0.5 seconds
+        timer.start();  // It might be inportant to actually start the timer if you want it to do anything lol
+
         this.stationSet = new StationSet(num_stations, nTypes);
-        // Formula for calculating required dimensions of floors for all stations to fit
-        dimension = (int) Math.sqrt(stationSet.totalSpots) + 1;
+        // Formula for calculating required dimensions of floors for all stations to fit, the constant is arbitrary and can be changed as long as it's >=1
+        dimension = (int) Math.sqrt(stationSet.totalSpots) + 2;
         // Initializes the affinity matrix
         createAffinityMatrix(nTypes);
 
@@ -103,6 +116,13 @@ public class Factory {
         }
     }
 
+    boolean isBestFloor(Floor floor) {
+        for (Floor best : bestFloors) {
+            if (best == floor) { return true; } // Found a match, you are a best floor
+        }
+        return false; // Did not find a match, not a best floor
+    }
+
     void start() {
         for (int i = 0; i < num_threads; i++) {
             threads[i].start();
@@ -129,6 +149,18 @@ public class Factory {
 
     void resetBarrier() {
         barrier = new CyclicBarrier(num_threads, this::resetBarrier);
+        for (int i = 0; i < floors.length; i++) {
+            System.out.print(floors[i].fitness + " ");
+        }
+        System.out.println();
+    }
+
+    ActionListener updateDisplay() {
+        return new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                ui.updateGrid(bestFloors[bestFloors.length-1]); // Update the display with the best floor
+            }
+        };
     }
 
     int getGenerationCount() {

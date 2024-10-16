@@ -23,7 +23,7 @@ public class GeneticFactory {
 
     static void runGeneticAlgorithm() {
 
-        Factory factory = new Factory(NUM_THREADS, NUM_STATIONS, nGen, nFitness, NUM_TYPES);
+        //Factory factory = new Factory(NUM_THREADS, NUM_STATIONS, nGen, nFitness, NUM_TYPES);
 
     }
 

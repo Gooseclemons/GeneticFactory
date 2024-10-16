@@ -16,6 +16,11 @@ public class StationSet {
     /** Represents the total spots required to place all stations in StationSet, helps with creating floors */
     int totalSpots;
 
+    /**
+     * Constructor for use by Factory, Floor
+     * @param num_of_stations
+     * @param num_of_types
+     */
     StationSet(int num_of_stations, int num_of_types) {
         this.num_of_stations = num_of_stations;
         this.num_of_types = num_of_types;
@@ -23,8 +28,23 @@ public class StationSet {
         initialize();
     }
 
+    /**
+     * Constructor for creating a copy of the stationSet
+     * @param other
+     */
     StationSet(StationSet other) {
         this(other.num_of_stations, other.num_of_types);
+    }
+
+    /**
+     * Constructor for creating an empty stationSet that can then have values added to it
+     * @param num_of_stations
+     * @param other
+     */
+    StationSet(int num_of_stations, StationSet other) {
+        this.num_of_stations = num_of_stations;
+        num_of_types = other.num_of_types;
+        stations = new ArrayList<>();
     }
 
     void initialize() {
@@ -40,6 +60,10 @@ public class StationSet {
 
     Station get(int idx) {
         return stations.get(idx);
+    }
+
+    void add(Station station) {
+        stations.add(station);
     }
 
     // Debugging

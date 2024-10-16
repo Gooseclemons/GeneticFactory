@@ -18,7 +18,7 @@ public class Station {
         coordinates.add(c);
     }
 
-    void remove(Coordinate c) {
+    void removeCoordinate(Coordinate c) {
         coordinates.remove(c);
     }
 
