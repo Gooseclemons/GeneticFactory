@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Factory {
 
@@ -26,7 +27,8 @@ public class Factory {
     final int num_floors;
     final int dimension;
 
-    int generationCount = 0;
+    // Simulation end parameters
+    AtomicInteger generationCount = new AtomicInteger(0);
     double fitnessCount = 0;
 
     // Barriers for running
@@ -70,7 +72,7 @@ public class Factory {
         }
 
         // After creating all Floors/Subpops, initialize the bestFloors field and call method to populate
-        bestFloors = new Floor[num_floors / 8]; // Set to save an eighth of the total floors as the best
+        bestFloors = new Floor[num_floors / 4]; // Set to save an eighth of the total floors as the best
         initialBestFloors();
 
     }
@@ -94,11 +96,14 @@ public class Factory {
      * Same insertion sort algorithm acan be used for the runtime version of checkBestFloors()
      */
     void initialBestFloors() {
-        int length = num_floors / 8; // Length of bestFloors array
+        int length = num_floors / 4; // Length of bestFloors array
         for (Floor floor : floors) {
             Floor challengerFloor = floor;
             for (int i = length - 1; i >= 0; i--) {
-                if (bestFloors[i] == null) { bestFloors[i] = challengerFloor; } // If current index is unoccupied, fill in by default
+                if (bestFloors[i] == null) { // If current index is unoccupied, fill in by default and break since there is no station to pass down
+                    bestFloors[i] = challengerFloor;
+                    break;
+                }
                 else if ((bestFloors[i] != null) && (challengerFloor.fitness > bestFloors[i].fitness)) { // If tempFloor has a better fitness value than current spot holder, replace
                     Floor tempFloor = bestFloors[i];
                     bestFloors[i] = challengerFloor;
@@ -111,13 +116,18 @@ public class Factory {
     /**
      * Synchronized method so only one thread can edit bestFloors array at one time
      * Assumes the bestFloors array is full since initializeBestFloors() populates the bestFloors array on Factory init
-     * @param challengerFloor
+     * @param floor
      */
-    synchronized void compareFloor(Floor challengerFloor) {
+    synchronized void compareFloor(Floor floor) {
         int length = bestFloors.length;
         // Loop from best to worst of bestFloors array
+
+        Floor challengerFloor = floor; // Variable for storing the floor currently competing to become one of the best, initialize with the input floor and swap with replaces
         for (int i = length - 1; i >= 0; i--) {
-            if (challengerFloor.fitness > bestFloors[i].fitness) {
+            if (challengerFloor == bestFloors[i]) { // If floor finds itself in the bestFloors array...
+                break; // Break to prevent copies
+            }
+            else if (challengerFloor.fitness > bestFloors[i].fitness) {
                 Floor tempFloor = bestFloors[i];
                 bestFloors[i] = challengerFloor;
                 challengerFloor = tempFloor;
@@ -125,19 +135,18 @@ public class Factory {
         }
     }
 
-    synchronized boolean tryAcquire() {
-        return semaphore.tryAcquire();
-    }
-
-    void release() {
-        semaphore.release();
-    }
-
     boolean isBestFloor(Floor floor) {
         for (Floor best : bestFloors) {
             if (best == floor) { return true; } // Found a match, you are a best floor
         }
         return false; // Did not find a match, not a best floor
+    }
+
+    /**
+     * Simple method call to update the best fitness value achieved so far, call with each barrier call
+     */
+    void updateBestFitness() {
+        fitnessCount = bestFloors[bestFloors.length - 1].fitness;
     }
 
     void start() {
@@ -153,6 +162,7 @@ public class Factory {
     }
 
     void threadDone() throws InterruptedException {
+        System.out.println("Killing thread");
         done.countDown();
     }
 
@@ -166,7 +176,7 @@ public class Factory {
 
     void resetBarrier() {
         barrier = new CyclicBarrier(num_threads, this::resetBarrier);
-        System.out.println("Barrier Trip");
+        updateBestFitness(); // Update the best fitness value at the end of each generation
     }
 
     void resetSemaphoreBarrier() {
@@ -182,7 +192,7 @@ public class Factory {
     }
 
     int getGenerationCount() {
-        return generationCount;
+        return generationCount.get();
     }
 
     double getFitnessCount() {

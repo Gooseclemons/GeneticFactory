@@ -182,9 +182,7 @@ public class Floor {
         }
 
         // Offer chosen stations to the exchanger
-        System.out.println("Pre exchanger");
         exchanger.exchange(crossoverStations);
-        System.out.println("Post exchanger");
 
         // Create a container floor to act as the new floor template
         Floor childFloor = new Floor(stationSet, stationSet.num_of_stations, dimension, affinityMatrix);

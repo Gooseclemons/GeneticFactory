@@ -2,6 +2,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Worker extends Thread {
 
@@ -10,13 +11,16 @@ public class Worker extends Thread {
     int nGen;
     double nFitness;
     // Variables for defining the populations current generation and highest fitness score
-    int generationCount;
+    AtomicInteger generationCount;
     double fitnessCount;
 
     Worker(Factory pop, int nGen, double nFitness) {
         this.pop = pop;
         this.nGen = nGen;
         this.nFitness = nFitness;
+
+        generationCount = pop.generationCount;
+        fitnessCount = pop.getFitnessCount();
     }
 
     /**
@@ -28,7 +32,9 @@ public class Worker extends Thread {
     public void run() {
         int length = pop.num_floors;
         int pos = ThreadLocalRandom.current().nextInt(0, length); // Random value from 0 - length-1
-        while (fitnessCount < nFitness && generationCount < nGen) { // While the simulation parameters haven't been exceeded...
+        while (fitnessCount < nFitness && generationCount.get() < nGen) { // While the simulation parameters haven't been exceeded...
+            int expectedGeneration = pop.getGenerationCount(); // Get the current generation count for CAS later
+
             Floor floor = pop.floors[pos];
             AtomicBoolean busy = floor.busy; // AtomicBoolean for blocking access to a subpop
             if (!busy.get() && busy.compareAndSet(false, true)) { // If the subpop isn't claimed by a thread already claim it and do stuff
@@ -36,19 +42,18 @@ public class Worker extends Thread {
                 try {
                     pop.cyclicBarrierWait(); // Waits to sync with other threads
                     if (!pop.isBestFloor(floor)) { // If not doing selection aka nothing
-//                        if (pop.tryAcquire()) { // If a crossover permit is available, crossover
-//                            floor.doCrossover();
-//                            pop.semaphoreCoordinator.await();
-//                            pop.release(); // Make sure to release the semaphore so it does stuff
-//                        } else { // If you aren't the best and couldnt crossover, just mutate
-//                            floor.doMutation();
-//                        }
+                        floor.doCrossover(); // Crossover
                         floor.doMutation();
-                    } // Selection just does nothing and waits at the barrier
+                    }
                     floor.calcFitness(); // Recalculate the fitness of the floor after the operation was performed
                     busy.set(false); // Now that the operation has been done, release the subpop so the next iteration can get one
                     pop.cyclicBarrierWait(); // Wait again at the cyclic barrier for everyone to free their subpop and do their operation
                     pos = ThreadLocalRandom.current().nextInt(0, length); // Gives a new random index for the next iteration to use
+
+                    // Simulation termination field changes
+                    pop.generationCount.compareAndSet(expectedGeneration, expectedGeneration + 1);
+                    fitnessCount = pop.getFitnessCount();
+
                 } catch (BrokenBarrierException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -57,6 +62,11 @@ public class Worker extends Thread {
             }
         }
         // Thread done call here when nGen and nFitness are implemented
+        try {
+            pop.threadDone();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
