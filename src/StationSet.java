@@ -50,11 +50,17 @@ public class StationSet {
     void initialize() {
         for (int i = 0; i < num_of_stations; i++) {
             int stationType = ThreadLocalRandom.current().nextInt(0, num_of_types);
-            stations.add(new Station(ThreadLocalRandom.current().nextInt(0, num_of_types))); // Assigns type, worry about more than one type later
+            stations.add(new Station(ThreadLocalRandom.current().nextInt(0, num_of_types), i)); // Assigns type, worry about more than one type later
             if (stationType == 0) { totalSpots++; }         //1X1 case
             else if (stationType == 1) { totalSpots += 2; } //1X2 case
             else if (stationType == 2) { totalSpots += 4; } //2X2 case
         }
+    }
+
+    void incrementSpots(Station s) {
+        if (s.type == 0) { totalSpots++; }         //1X1 case
+        else if (s.type == 1) { totalSpots += 2; } //1X2 case
+        else if (s.type == 2) { totalSpots += 4; } //2X2 case
     }
 
     int size() {

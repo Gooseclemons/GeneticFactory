@@ -9,13 +9,15 @@ public class Station {
     ArrayList<Coordinate> coordinates;
     Coordinate root;
     int type;
+    int id;
 
     /**
      * General constructor
      * @param type
      */
-    Station(int type) {
+    Station(int type, int id) {
         this.type = type;
+        this.id = id;
         coordinates = new ArrayList<>();
     }
 

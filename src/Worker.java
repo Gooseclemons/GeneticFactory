@@ -1,4 +1,5 @@
 import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -29,13 +30,19 @@ public class Worker extends Thread {
         int pos = ThreadLocalRandom.current().nextInt(0, length); // Random value from 0 - length-1
         while (fitnessCount < nFitness && generationCount < nGen) { // While the simulation parameters haven't been exceeded...
             Floor floor = pop.floors[pos];
-            AtomicBoolean busy = floor.busy;
+            AtomicBoolean busy = floor.busy; // AtomicBoolean for blocking access to a subpop
             if (!busy.get() && busy.compareAndSet(false, true)) { // If the subpop isn't claimed by a thread already claim it and do stuff
                 pop.compareFloor(floor); // Compares floor in possession to bestFloors to replace if better
                 try {
                     pop.cyclicBarrierWait(); // Waits to sync with other threads
-                    if (!pop.isBestFloor(floor)) {
-                        // doMutation() and later doCrossover()
+                    if (!pop.isBestFloor(floor)) { // If not doing selection aka nothing
+//                        if (pop.tryAcquire()) { // If a crossover permit is available, crossover
+//                            floor.doCrossover();
+//                            pop.semaphoreCoordinator.await();
+//                            pop.release(); // Make sure to release the semaphore so it does stuff
+//                        } else { // If you aren't the best and couldnt crossover, just mutate
+//                            floor.doMutation();
+//                        }
                         floor.doMutation();
                     } // Selection just does nothing and waits at the barrier
                     floor.calcFitness(); // Recalculate the fitness of the floor after the operation was performed

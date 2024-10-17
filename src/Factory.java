@@ -2,11 +2,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.*;
 
 public class Factory {
 
@@ -14,6 +12,11 @@ public class Factory {
     final Floor[] floors;
     double[][] affinityMatrix;
     Floor[] bestFloors;
+
+    // Syncronization Objects
+    final Semaphore semaphore;
+    CyclicBarrier semaphoreCoordinator;
+    final Exchanger<ArrayList<Station>> exchanger;
 
     // UI components
     FactoryUI ui;
@@ -40,6 +43,11 @@ public class Factory {
         done = new CountDownLatch(num_threads);
         barrier = new CyclicBarrier(num_threads, this::resetBarrier); // Supply action to cyclic barrier to reset itself upon continuation?
 
+        // Semaphore to help coordinate which threads do crossover, reserves half the total floors for crossover
+        semaphore = new Semaphore(num_floors / 2);
+        semaphoreCoordinator = new CyclicBarrier(num_floors / 2, this::resetSemaphoreBarrier);
+        exchanger = new Exchanger<>();
+
         // Initialize UI
         ui = new FactoryUI(this, Color.LIGHT_GRAY);
         timer = new Timer(500, updateDisplay());    // Update every 0.5 seconds
@@ -47,7 +55,7 @@ public class Factory {
 
         this.stationSet = new StationSet(num_stations, nTypes);
         // Formula for calculating required dimensions of floors for all stations to fit, the constant is arbitrary and can be changed as long as it's >=1
-        dimension = (int) Math.sqrt(stationSet.totalSpots) + 2;
+        dimension = (int) Math.sqrt(stationSet.totalSpots) + 5;
         // Initializes the affinity matrix
         createAffinityMatrix(nTypes);
 
@@ -58,7 +66,7 @@ public class Factory {
 
         floors = new Floor[num_floors];
         for (int i = 0; i < num_floors; i++) {
-            floors[i] = new Floor(stationSet, dimension, affinityMatrix);
+            floors[i] = new Floor(stationSet, dimension, affinityMatrix, this);
         }
 
         // After creating all Floors/Subpops, initialize the bestFloors field and call method to populate
@@ -117,6 +125,14 @@ public class Factory {
         }
     }
 
+    synchronized boolean tryAcquire() {
+        return semaphore.tryAcquire();
+    }
+
+    void release() {
+        semaphore.release();
+    }
+
     boolean isBestFloor(Floor floor) {
         for (Floor best : bestFloors) {
             if (best == floor) { return true; } // Found a match, you are a best floor
@@ -150,7 +166,11 @@ public class Factory {
 
     void resetBarrier() {
         barrier = new CyclicBarrier(num_threads, this::resetBarrier);
-        System.out.println(bestFloors[bestFloors.length - 1].fitness);
+        System.out.println("Barrier Trip");
+    }
+
+    void resetSemaphoreBarrier() {
+        semaphoreCoordinator = new CyclicBarrier(num_threads / 2, this::resetSemaphoreBarrier);
     }
 
     ActionListener updateDisplay() {
