@@ -49,8 +49,11 @@ public class StationSet {
 
     void initialize() {
         for (int i = 0; i < num_of_stations; i++) {
-            stations.add(new Station(ThreadLocalRandom.current().nextInt(1, num_of_types + 1))); // Assigns type, worry about more than one type later
-            totalSpots += 1; // Assumes stations of 1X1 proportion, add mre type functionality later
+            int stationType = ThreadLocalRandom.current().nextInt(0, num_of_types);
+            stations.add(new Station(ThreadLocalRandom.current().nextInt(0, num_of_types))); // Assigns type, worry about more than one type later
+            if (stationType == 0) { totalSpots++; }         //1X1 case
+            else if (stationType == 1) { totalSpots += 2; } //1X2 case
+            else if (stationType == 2) { totalSpots += 4; } //2X2 case
         }
     }
 

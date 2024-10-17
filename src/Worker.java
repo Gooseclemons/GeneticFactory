@@ -28,11 +28,6 @@ public class Worker extends Thread {
         int length = pop.num_floors;
         int pos = ThreadLocalRandom.current().nextInt(0, length); // Random value from 0 - length-1
         while (fitnessCount < nFitness && generationCount < nGen) { // While the simulation parameters haven't been exceeded...
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
             Floor floor = pop.floors[pos];
             AtomicBoolean busy = floor.busy;
             if (!busy.get() && busy.compareAndSet(false, true)) { // If the subpop isn't claimed by a thread already claim it and do stuff

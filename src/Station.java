@@ -7,11 +7,25 @@ import java.util.HashSet;
 public class Station {
 
     ArrayList<Coordinate> coordinates;
+    Coordinate root;
     int type;
 
+    /**
+     * General constructor
+     * @param type
+     */
     Station(int type) {
         this.type = type;
         coordinates = new ArrayList<>();
+    }
+
+    /**
+     * Add a coordinate as a root coordinate as well as add the coordinate to the coordinates array
+     * @param root
+     */
+    void setRoot(Coordinate root) {
+        this.root = root;
+        addCoordinate(root);
     }
 
     void addCoordinate(Coordinate c) {
@@ -20,6 +34,10 @@ public class Station {
 
     void removeCoordinate(Coordinate c) {
         coordinates.remove(c);
+    }
+
+    void removeAllCoordinates() {
+        coordinates.clear();
     }
 
     int getType() {

@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
@@ -149,10 +150,7 @@ public class Factory {
 
     void resetBarrier() {
         barrier = new CyclicBarrier(num_threads, this::resetBarrier);
-        for (int i = 0; i < floors.length; i++) {
-            System.out.print(floors[i].fitness + " ");
-        }
-        System.out.println();
+        System.out.println(bestFloors[bestFloors.length - 1].fitness);
     }
 
     ActionListener updateDisplay() {

@@ -37,9 +37,52 @@ public class Floor {
      */
     private void initializeFloor() {
         for (Station station : stationSet.stations) {
-            int random = ThreadLocalRandom.current().nextInt(0, availableCoordinates.size()); // Gets a random coordinate from availableCoordinates
-            station.addCoordinate(availableCoordinates.get(random));
-            availableCoordinates.remove(random);
+            placeStation(station);
+        }
+    }
+
+    /**
+     * Find a place on the floor for a station of any given type to fit and place while updating relevant fields
+     * Search availableCoordinates from start to end for viable placement
+     * @param station
+     */
+    void placeStation(Station station) {
+        while (true) {
+            Coordinate possibleRoot = availableCoordinates.get(ThreadLocalRandom.current().nextInt(availableCoordinates.size()));
+            if (station.type == 0) { // 1X1...just place station
+                availableCoordinates.addAll(station.coordinates);
+                station.removeAllCoordinates();
+                station.setRoot(possibleRoot);
+                availableCoordinates.remove(possibleRoot);
+                return;
+            } else if (station.type == 1) { // 1X2...check for one adjacent available spot
+                for (int x = -1; x <= 1; x += 2) { // Check for availability in the x direction
+                    Coordinate pairCoordinate = new Coordinate(possibleRoot.x + x, possibleRoot.y);
+                    if (availableCoordinates.contains(pairCoordinate)) {
+                        availableCoordinates.addAll(station.coordinates);
+                        station.removeAllCoordinates();
+                        station.setRoot(possibleRoot);
+                        station.addCoordinate(pairCoordinate);
+                        availableCoordinates.remove(possibleRoot);
+                        availableCoordinates.remove(pairCoordinate);
+                        return;
+                    }
+                }
+                for (int y = -1; y <= 1; y += 2) {
+                    Coordinate pairCoordinate = new Coordinate(possibleRoot.x, possibleRoot.y + y);
+                    if (availableCoordinates.contains(pairCoordinate)) {
+                        availableCoordinates.addAll(station.coordinates);
+                        station.removeAllCoordinates();
+                        station.setRoot(possibleRoot);
+                        station.addCoordinate(pairCoordinate);
+                        availableCoordinates.remove(possibleRoot);
+                        availableCoordinates.remove(pairCoordinate);
+                        return;
+                    }
+                }
+            } else if (station.type == 2) { // 2X2...check for square region
+
+            }
         }
     }
 
@@ -51,11 +94,14 @@ public class Floor {
                 Station station1 = stationSet.get(i);
                 Station station2 = stationSet.get(j);
                 // Gets the root coordinate for given stations, when multiple types are introduced add a root coordinate to station class so the below code can be simplified
-                Coordinate root1 = station1.coordinates.getFirst();
-                Coordinate root2 = station2.coordinates.getFirst();
+                Coordinate root1 = station1.root;
+                Coordinate root2 = station2.root;
                 // Now use built in method from Coordinate class to get the distance between points
                 double distance = root1.distance(root2);
-                double affinity = affinityMatrix[station1.type - 1][station2.type - 1]; // Might need to minus 1 the types, check if issues
+                if (distance == 0) {
+                    System.out.println();
+                }
+                double affinity = affinityMatrix[station1.type][station2.type]; // Types are zero based
                 fitness += (1 / distance) * affinity; // Taking the reciprocal of distance punishes further distances while rewarding shorter distances
             }
         }
@@ -69,16 +115,8 @@ public class Floor {
         }
 
         for (Station station : mutationSet.stations) { // Now iterate through mutationSet while deciding which operation to perform based off of a random number perhaps
-            // Random number
             // if (number == 0) { shift; } if (number == 1) { relocate; }, if one method fails try the other
-            // Get a random coordinate from available coordinate
-            Coordinate newCoordinate = availableCoordinates.get(ThreadLocalRandom.current().nextInt(0, availableCoordinates.size())); // Need to change this to an arraylist when multiple types added
-            if (newCoordinate == null) { return; } // If there are no available coordinates
-            ArrayList<Coordinate> oldCoordinates = (ArrayList<Coordinate>) station.coordinates.clone();
-            for (Coordinate coordinate : oldCoordinates) {
-                station.removeCoordinate(coordinate);   // Removes all the coordinates from stations old position...
-            }
-            station.addCoordinate(newCoordinate); // ...and adds the new coordinate
+            placeStation(station);
         }
     }
 

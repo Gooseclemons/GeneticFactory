@@ -75,8 +75,10 @@ public class FactoryUI extends JFrame {
                 JPanel panel = new JPanel();
                 if (f.availableCoordinates.contains(new Coordinate(i, j)))
                     panel.setBackground(backgroundColor);
-                else
-                    panel.setBackground(Color.BLACK);
+                else {
+                    panel.setBackground(Color.GREEN);
+                    //panel.add(new JLabel("1", SwingConstants.CENTER));
+                }
                 factoryGrid.add(panel);
             }
         }
