@@ -1,6 +1,7 @@
 import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
+import java.util.ArrayList;
 
 public class FactoryUI extends JFrame {
 
@@ -62,28 +63,69 @@ public class FactoryUI extends JFrame {
 
     }
 
+//    void updateGrid(Floor f) {
+//        factoryGrid.removeAll();
+//        int dimension = parentFactory.dimension;
+//
+//        // Add gridLayout to factoryGrid before adding floor stations
+//        factoryGrid.setLayout(new GridLayout(dimension, dimension, 1, 1));
+//
+//        // Paints stations as black and unoccupied spots as default background color
+//        for (int i = 0; i < dimension; i++) {
+//            for (int j = 0; j < dimension; j++) {
+//                JPanel panel = new JPanel();
+//                if (f.availableCoordinates.contains(new Coordinate(i, j)))
+//                    panel.setBackground(backgroundColor);
+//                else {
+//                    panel.setBackground(Color.GREEN);
+//                    //panel.add(new JLabel("1", SwingConstants.CENTER));
+//                }
+//                factoryGrid.add(panel);
+//            }
+//        }
+//
+//        factoryGrid.revalidate(); // This is required to fix the GridLayout display because swing likes to be annoying :'(
+//
+//    }
+
     void updateGrid(Floor f) {
         factoryGrid.removeAll();
         int dimension = parentFactory.dimension;
 
-        // Add gridLayout to factoryGrid before adding floor stations
+        // Create and fill an array with black JPanels to be edited later
+        JPanel[][] panelArray = new JPanel[dimension][dimension];
+
         factoryGrid.setLayout(new GridLayout(dimension, dimension, 1, 1));
 
-        // Paints stations as black and unoccupied spots as default background color
-        for (int i = 0; i < dimension; i++) {
-            for (int j = 0; j < dimension; j++) {
+        // Set all JPanels that are on available coordinates to background color
+        for (Coordinate coordinate : f.availableCoordinates) {
+            int x = coordinate.x;
+            int y = coordinate.y;
+            JPanel panel = new JPanel();
+            panel.setBackground(backgroundColor);
+            panelArray[x][y] = panel;
+        }
+        // Now set all of the Stations to panels
+        for (Station s : f.stationSet.stations) {
+            ArrayList<Coordinate> coordinates = s.coordinates;
+            for (Coordinate coordinate : coordinates) {
+                int x = coordinate.x;
+                int y = coordinate.y;
                 JPanel panel = new JPanel();
-                if (f.availableCoordinates.contains(new Coordinate(i, j)))
-                    panel.setBackground(backgroundColor);
-                else {
-                    panel.setBackground(Color.GREEN);
-                    //panel.add(new JLabel("1", SwingConstants.CENTER));
-                }
-                factoryGrid.add(panel);
+                if (s.type == 0) { panel.setBackground(Color.GREEN); panel.add(new JLabel("1"), SwingConstants.CENTER); }
+                else if (s.type == 1) { panel.setBackground(Color.RED); panel.add(new JLabel("2"), SwingConstants.CENTER); }
+                panelArray[x][y] = panel;
             }
         }
 
-        factoryGrid.revalidate(); // This is required to fix the GridLayout display because swing likes to be annoying :'(
+        // Add all of the panels to the factoryGrid
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                factoryGrid.add(panelArray[i][j]);
+            }
+        }
+
+        factoryGrid.revalidate();
 
     }
 

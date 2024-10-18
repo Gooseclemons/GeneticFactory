@@ -10,10 +10,10 @@ public class GeneticFactory {
     static final int NUM_THREADS = 32;
 
     /** User defined desired number of generations to run for the simulation */
-    static final int nGen = 1000;
+    static final int nGen = 10000000;
 
     /** User defined desired fitness score for the simulation */
-    static final double nFitness = 500;
+    static final double nFitness = 50000000;
 
     public static void main(String[] args) {
 
